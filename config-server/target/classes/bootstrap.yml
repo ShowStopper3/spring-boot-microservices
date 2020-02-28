@@ -1,0 +1,37 @@
+server:
+  port: 8080
+
+zuul:
+  ribbon:
+    eager-load:
+      enabled: true
+
+spring:
+  application:
+    name: config-server
+  cloud:
+    config:
+      server:
+        encrypt.enabled: false
+        git:
+          uri: https://github.com/ShowStopper3/config-repo/
+          searchPaths: order-service,customer-service
+
+
+eureka:
+  client:
+    registerWithEureka: true
+    fetchRegistry: true
+    service-url:
+      defaultZone: http://eureka-server:8080/eureka/
+    instance-info-replication-interval-seconds: 30
+    registry-fetch-interval-seconds: 30
+
+
+
+#Setting logging levels
+logging:
+  level:
+    com.netflix: WARN
+    org.springframework.web: WARN
+    com.sac: DEBUG

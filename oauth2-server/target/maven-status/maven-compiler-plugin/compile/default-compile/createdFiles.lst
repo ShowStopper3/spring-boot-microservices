@@ -1,0 +1,4 @@
+com\sac\authserver\config\AuthorizationServerConfig.class
+com\sac\authserver\InspectHeaderFilter.class
+com\sac\authserver\AuthApplication.class
+com\sac\authserver\config\WebConfig.class

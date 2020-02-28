@@ -1,0 +1,53 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: customer-service
+  profiles:
+    active:
+      default
+  cloud:
+    config:
+      enabled: true
+      hostname: config-server
+      uri: http://config-server:8080
+      fail-fast: false
+  boot:
+    admin:
+      client:
+        url: http://admin-server:8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+    health:
+      show-details: always
+
+
+eureka:
+  client:
+    registerWithEureka: true
+    fetchRegistry: true
+    service-url:
+      defaultZone: http://eureka-server:8080/eureka/
+    instance-info-replication-interval-seconds: 30
+    registry-fetch-interval-seconds: 30
+
+
+
+zuul:
+  ribbon:
+    eager-load:
+      enabled: true
+
+
+
+#Setting logging levels
+logging:
+  level:
+    com.netflix: WARN
+    org.springframework.web: WARN
+    com.sac: DEBUG

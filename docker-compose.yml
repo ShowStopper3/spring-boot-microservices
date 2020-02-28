@@ -1,0 +1,158 @@
+version: '3'
+services:
+
+  # https://github.com/wurstmeister/zookeeper-docker
+  zookeeper:
+    container_name: zookeeper
+    image: wurstmeister/zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    ports:
+      - "2181:2181"
+
+  # https://hub.docker.com/r/confluentinc/cp-kafka/
+  kafka:
+    container_name: kafka
+    image: wurstmeister/kafka:2.12-2.4.0
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: >-
+        LISTENER_DOCKER_INTERNAL://kafka:19092,
+        LISTENER_DOCKER_EXTERNAL://kafka:9092
+      KAFKA_LISTENERS: >-
+        LISTENER_DOCKER_INTERNAL://:19092,
+        LISTENER_DOCKER_EXTERNAL://:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: >-
+        LISTENER_DOCKER_INTERNAL:PLAINTEXT,
+        LISTENER_DOCKER_EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_DOCKER_INTERNAL
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_LOG4J_LOGGERS: >-
+        kafka.controller=INFO,
+        kafka.producer.async.DefaultEventHandler=INFO,
+        state.change.logger=INFO
+    ports:
+      - 9092:9092
+    depends_on:
+      - zookeeper
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  mysql:
+    container_name: mysql
+    image: mysql/mysql-server:5.7
+    environment:
+      MYSQL_DATABASE: e_commerce
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_HOST: '%'
+    expose:
+      - 3306
+    restart: always
+    volumes:
+      - ./sql:/docker-entrypoint-initdb.d
+
+
+  admin-server:
+    container_name: admin-server
+    build: ./admin-server
+    ports:
+      - 8081:8080
+    depends_on:
+      - mysql
+    entrypoint: /bin/sh
+    command: >
+      -c "
+      while ! (nc -z mysql 3306); do sleep 5; echo 'Waiting for database to start-up...'; done;
+      java -jar  /app.jar
+      "
+
+  eureka-server:
+    container_name: eureka-server
+    build: ./eureka-server
+    ports:
+      - 8082:8080
+    depends_on:
+      - admin-server
+    entrypoint: /bin/sh
+    command: >
+      -c "
+      while ! (nc -z admin-server 8080); do sleep 5; echo 'Waiting for admin-server to start-up...'; done;
+      java -jar  /app.jar
+      "
+
+  zuul-server:
+    container_name: zuul-server
+    build: ./zuul-server
+    ports:
+      - 8080:8080
+    depends_on:
+      - eureka-server
+    entrypoint: /bin/sh
+    command: >
+      -c "
+      while ! (nc -z eureka-server 8080); do sleep 5; echo 'Waiting for eureka-server to start-up...'; done;
+      java -jar  /app.jar
+      "
+
+
+
+  config-server:
+    container_name: config-server
+    build: ./config-server
+    expose:
+      - 8080
+    depends_on:
+      - eureka-server
+    entrypoint: /bin/sh
+    command: >
+      -c "
+      while ! (nc -z zuul-server 8080); do sleep 5; echo 'Waiting for zuul-server to start-up...'; done;
+      java -jar  /app.jar
+      "
+
+  oauth2-server:
+    container_name: oauth2-server
+    build: oauth2-server
+    expose:
+      - 8080
+    depends_on:
+      - config-server
+    entrypoint: /bin/sh
+    command: >
+      -c "
+      while ! (nc -z config-server 8080); do sleep 5; echo 'Waiting for config-server to start-up...'; done;
+      java -jar  /app.jar
+      "
+
+
+  customer-service:
+    container_name: customer-service
+    build: ./customer-service
+    expose:
+      - 8080
+    depends_on:
+      - eureka-server
+    entrypoint: /bin/sh
+    command: >
+      -c "
+      while ! (nc -z oauth2-server 8080); do sleep 5; echo 'Waiting for oauth2-server to start-up...'; done;
+      java -jar  /app.jar
+      "
+
+  order-service:
+    container_name: order-service
+    build: ./order-service
+    expose:
+      - 8080
+    depends_on:
+      - eureka-server
+    entrypoint: /bin/sh
+    command: >
+      -c "
+      while ! (nc -z customer-service 8080); do sleep 5; echo 'Waiting for customer-service to start-up...'; done;
+      java -jar  /app.jar
+      "
+
+
+
+

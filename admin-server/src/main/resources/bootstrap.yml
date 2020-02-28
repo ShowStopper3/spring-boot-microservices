@@ -1,0 +1,21 @@
+
+
+spring:
+  application:
+    name: admin-server
+
+
+
+
+zuul:
+  ribbon:
+    eager-load:
+      enabled: true
+
+
+#Setting logging levels
+logging:
+  level:
+    com.netflix: WARN
+    org.springframework.web: WARN
+    com.sac: DEBUG

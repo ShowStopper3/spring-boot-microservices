@@ -1,0 +1,61 @@
+
+zuul:
+  ignored-services: '*'
+  prefix:  /v1/api
+  routes:
+    oauth2-server: /secure/**
+    customer-service: /customer/**
+    order-service: /order/**
+  sensitiveHeaders: Cookie,Set-Cookie
+  host:
+    time-to-live: -1
+  semaphore:
+    max-semaphores: 500
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+
+server:
+  port: 8080
+
+
+spring:
+  application:
+    name: zuul-server
+
+
+
+eureka:
+  client:
+    registerWithEureka: true
+    fetchRegistry: true
+    service-url:
+      defaultZone: http://eureka-server:8080/eureka/
+
+
+
+
+#Setting logging levels
+logging:
+  level:
+    com.netflix: WARN
+    org.springframework.web: WARN
+    com.sac: DEBUG
+
+
+# Increase the Hystrix timeout to 60s (globally)
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 60000
+
+ribbon:
+  ConnectTimeout: 60000
+  ReadTimeout: 60000
