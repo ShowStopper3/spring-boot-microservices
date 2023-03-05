@@ -33,13 +33,11 @@ The application consists of 6 different services
 
 
 ## <a name="project-run"></a>How To Run ?
-* You can run the project using **Docker** with the help of  following steps:
+* You can run the project using following steps:
     * Install latest version of **Docker**  in your machine.
-    * Import this **GIT** repository in **IntelliJ**.
-    * Run mvn `clean` and then mvn `install` on `spring-boot-microservice's` **pom.xml**.
+    * Clone this **GIT** repository.
     * Go to directory `spring-boot-microservice` on your system.
-    * Make sure this location contains contains file  `docker-compose.xml`.
-    * Run `docker-compose build` and then `docker-compose up`.
+    * Run `docker-compose up --build` and then `docker-compose up`.
  
  
 ## <a name="rest-end"></a>Rest End Points.
